@@ -20,11 +20,12 @@ app.get("/api/v1/chats/:id/", (req, res) => {
   const singleChat = data.find((c) => c._id === req.params.id);
   res.send(singleChat);
 });
-let roomChats = [
+const initalChats = [
   [{ username: "Admin", message: "Welcome" }],
   [{ username: "Admin", message: "Welcome" }],
   [{ username: "Admin", message: "Welcome" }],
 ];
+let roomChats = [...initalChats.map((subarray) => [...subarray])];
 let activeSockets = {};
 const users = new Set();
 // let roomChats = {};
@@ -67,10 +68,18 @@ io.on("connection", function (socket) {
   socket.on("user-disconnect", (username) => {
     console.log(username, "disconnected");
     users.delete(activeSockets[socket.id]);
+    if (Object.keys(activeSockets).length === 0) {
+      console.log("No More Sockets");
+      roomChats = [...initalChats.map((subarray) => [...subarray])];
+    }
   });
   socket.on("disconnect", () => {
     users.delete(activeSockets[socket.id]);
     delete activeSockets[socket.id];
+    if (Object.keys(activeSockets).length === 0) {
+      console.log("No More Sockets");
+      roomChats = [...initalChats.map((subarray) => [...subarray])];
+    }
   });
   socket.on("setChats", (activeRoom, username, newMessage) => {
     roomChats[activeRoom].push({ username, message: newMessage });
